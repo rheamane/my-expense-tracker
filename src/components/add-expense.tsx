@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,6 +58,8 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(url, key);
 
 export default function ExpenseForm() {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   const form = useForm<Expense>({
     defaultValues: {
       title: "",
@@ -68,16 +71,23 @@ export default function ExpenseForm() {
   });
 
   async function onSubmit(data: Expense) {
+    console.log("Data", data.title);
+
     const { error } = await supabase.from("Expenses").insert({
       title: data.title,
-      date: data.date.toISOString(),
       category: data.category,
       amount: data.amount,
       notes: data.notes,
+      expensed_at: data.date.toISOString(),
     });
 
     if (error) {
       console.log("Error: ", error);
+    } else {
+      // Take out later
+      console.log("Data Entered: ", data.title);
+      form.reset();
+      closeRef.current?.click();
     }
   }
 
@@ -233,14 +243,25 @@ export default function ExpenseForm() {
                 )}
               />
             </div>
+            <DialogFooter className="sm:justify-start">
+              {/* Cancel Button that closes dialog */}
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button type="submit"> Submit</Button>
+
+              {/* Invisible close button */}
+              <DialogClose asChild>
+                <button
+                  ref={closeRef}
+                  type="button"
+                  className="hidden"
+                  aria-hidden
+                />
+              </DialogClose>
+            </DialogFooter>
           </form>
         </Form>
-        <DialogFooter className="sm:justify-start">
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit"> Submit</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
