@@ -1,103 +1,176 @@
-import Image from "next/image";
+"use client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ExpenseForm from "@/components/add-expense";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { createClient } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+
+enum Category {
+  Groceries = "groceries",
+  Utilities = "utilities",
+  Rent = "rent",
+  Travel = "travel",
+  Subscriptions = "subscriptions",
+  Dining = "dining",
+  Miscellaneous = "miscellaneous",
+  Shopping = "shopping",
+}
+
+const categoryColors: Record<Category, string> = {
+  [Category.Groceries]: "bg-green-100 text-green-800",
+  [Category.Utilities]: "bg-blue-100 text-blue-800",
+  [Category.Rent]: "bg-purple-100 text-purple-800",
+  [Category.Travel]: "bg-yellow-100 text-yellow-800",
+  [Category.Subscriptions]: "bg-pink-100 text-pink-800",
+  [Category.Dining]: "bg-orange-100 text-orange-800",
+  [Category.Miscellaneous]: "bg-gray-100 text-gray-800",
+  [Category.Shopping]: "bg-indigo-100 text-indigo-800",
+};
+
+interface Expense {
+  category: string;
+  title: string;
+  amount: string;
+  notes: string;
+}
+
+// DB Connection
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(url, key);
+
+function sumExpense(expenses: Expense[]) {
+  let sum = 0.0;
+  expenses.forEach((exp: Expense) => {
+    sum += Number(exp.amount);
+  });
+  return Math.round(sum * 100) / 100.0;
+}
+
+// Getting 3 months data
+async function get3MonthsData() {
+  const today = new Date();
+  const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  const isoDate = threeMonthsAgo.toISOString();
+  // console.log("3 months ago: ", isoDate);
+
+  // Querying Supabase:
+  const { data, error } = await supabase
+    .from("Expenses")
+    .select()
+    .gte("expensed_at", isoDate);
+
+  if (error) {
+    throw new Error("Could not fetch data.");
+  } else {
+    const grouped = data.reduce((acc, item) => {
+      const month = new Date(item.expensed_at).toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+
+      acc[month] = acc[month] || [];
+      acc[month].push(item);
+      return acc;
+    }, {});
+    return grouped;
+  }
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // State Variable
+  const [result, setResult] = useState<Record<string, Expense[]>>({});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const refreshData = async () => {
+    const data = await get3MonthsData();
+    setResult(data);
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const months = Object.keys(result).sort(
+    (a, b) => new Date(a).getTime() - new Date(b).getTime()
+  );
+  console.log(months);
+
+  return (
+    <div className="flex min-h-screen justify-center items-center">
+      <div className="flex w-full max-w-lg flex-col gap-6 mx-auto">
+        <div className="self-start">
+          <ExpenseForm onSubmitSuccess={refreshData} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <Tabs defaultValue={months[0]}>
+          <TabsList className="flex w-full justify-between gap-x-4 bg-blue-100">
+            {months.map((month) => {
+              return (
+                <TabsTrigger
+                  key={month}
+                  className="text-slate-800"
+                  value={month}
+                >
+                  {month}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          <div className="min-h-[400px] transition-all">
+            {months.map((month) => {
+              return (
+                <TabsContent key={month} value={month}>
+                  <div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">Category</TableHead>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead className="text-right">Notes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {result[month].map((expense: Expense) => (
+                          <TableRow key={expense.title}>
+                            <TableCell className="font-medium ">
+                              <Badge
+                                className={
+                                  categoryColors[expense.category as Category]
+                                }
+                              >
+                                {expense.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{expense.title}</TableCell>
+                            <TableCell>{expense.amount}</TableCell>
+                            <TableCell className="text-right">
+                              {expense.notes}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="mt-4">
+                      <h2 className="text-xl font-bold text-primary">
+                        Total Expense: ${sumExpense(result[month])}
+                      </h2>
+                    </div>
+                  </div>
+                </TabsContent>
+              );
+            })}
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "category": "Rent",
+    "title": "Monthly Rent",
+    "amount": "$1200.00",
+    "notes": "Paid to landlord"
+  },
+  {
+    "category": "Groceries",
+    "title": "Trader Joe's",
+    "amount": "$85.50",
+    "notes": "Weekly groceries"
+  },
+  {
+    "category": "Utilities",
+    "title": "Electric Co.",
+    "amount": "$67.30",
+    "notes": "Electric bill"
+  },
+  {
+    "category": "Dining",
+    "title": "Panera Bread",
+    "amount": "$18.25",
+    "notes": "Lunch with coworkers"
+  },
+  {
+    "category": "Subscriptions",
+    "title": "Spotify",
+    "amount": "$9.99",
+    "notes": "Monthly music"
+  }
+]
