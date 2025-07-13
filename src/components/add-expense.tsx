@@ -7,7 +7,6 @@ import { Textarea } from "./ui/textarea";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -31,19 +30,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { createClient } from "@supabase/supabase-js";
+
+interface Expense {
+  title: string;
+  month: string;
+  category: string;
+  amount: number;
+  notes: string;
+}
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(url, key);
+
 export default function ExpenseForm() {
-  const form = useForm({
+  const form = useForm<Expense>({
     defaultValues: {
       title: "",
       month: "",
       category: "",
-      amount: "",
+      amount: 0.0,
       notes: "",
     },
   });
 
-  function onSubmit(data: any) {
-    console.log("Form Submitted: ", data);
+  async function onSubmit(data: Expense) {
+    const { error } = await supabase.from("Expenses").insert({
+      title: data.title,
+      category: data.category,
+      amount: data.amount,
+      notes: data.notes,
+    });
+
+    if (error) {
+      console.log("Error: ", error);
+    }
+    // console.log("Form Submitted: ", finalPayload);
   }
 
   return (
@@ -53,7 +76,9 @@ export default function ExpenseForm() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Expense</DialogTitle>
+          <DialogTitle className="text-primary text-2xl font-bold mb-4">
+            Add New Expense
+          </DialogTitle>
           <DialogDescription asChild>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
@@ -123,8 +148,8 @@ export default function ExpenseForm() {
                             <SelectItem value="utilities">Utilities</SelectItem>
                             <SelectItem value="rent">Rent</SelectItem>
                             <SelectItem value="travel">Travel</SelectItem>
-                            <SelectItem value="subscripptions">
-                              Subscripptions
+                            <SelectItem value="subscriptions">
+                              Subscriptions
                             </SelectItem>
                             <SelectItem value="dining">Dining</SelectItem>
                             <SelectItem value="miscellaneous">
@@ -176,8 +201,8 @@ export default function ExpenseForm() {
                       </FormItem>
                     )}
                   />
-                  
-                <Button type="submit"> Submit</Button>
+
+                  <Button type="submit"> Submit</Button>
                 </div>
               </form>
             </Form>
