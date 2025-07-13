@@ -1,0 +1,38 @@
+[
+  {
+    "category": "Rent",
+    "title": "Monthly Rent",
+    "amount": "$1200.00",
+    "notes": "Paid to landlord"
+  },
+  {
+    "category": "Groceries",
+    "title": "Whole Foods",
+    "amount": "$95.20",
+    "notes": "Organic groceries"
+  },
+  {
+    "category": "Utilities",
+    "title": "Water Utility",
+    "amount": "$38.40",
+    "notes": "Water bill"
+  },
+  {
+    "category": "Dining",
+    "title": "Olive Garden",
+    "amount": "$32.10",
+    "notes": "Dinner with family"
+  },
+  {
+    "category": "Travel",
+    "title": "Train Ticket",
+    "amount": "$45.00",
+    "notes": "Weekend trip"
+  },
+  {
+    "category": "Shopping",
+    "title": "Target",
+    "amount": "$60.00",
+    "notes": "Home supplies"
+  }
+]
