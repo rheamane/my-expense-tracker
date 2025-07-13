@@ -1,8 +1,12 @@
 "use client";
 import { useForm } from "react-hook-form";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
 
 import {
   Form,
@@ -30,11 +34,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
 import { createClient } from "@supabase/supabase-js";
 
 interface Expense {
   title: string;
-  date: string;
+  date: Date;
   category: string;
   amount: number;
   notes: string;
@@ -48,7 +58,7 @@ export default function ExpenseForm() {
   const form = useForm<Expense>({
     defaultValues: {
       title: "",
-      date: "",
+      date: undefined,
       category: "",
       amount: 0.0,
       notes: "",
@@ -58,6 +68,7 @@ export default function ExpenseForm() {
   async function onSubmit(data: Expense) {
     const { error } = await supabase.from("Expenses").insert({
       title: data.title,
+      date: data.date.toISOString(),
       category: data.category,
       amount: data.amount,
       notes: data.notes,
@@ -66,7 +77,7 @@ export default function ExpenseForm() {
     if (error) {
       console.log("Error: ", error);
     }
-    // console.log("Form Submitted: ", finalPayload);
+
   }
 
   return (
@@ -99,28 +110,45 @@ export default function ExpenseForm() {
                     )}
                   />
 
-                  {/** Month */}
+                  {/** Date */}
                   <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choose Month" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="may">May</SelectItem>
-                            <SelectItem value="june">June</SelectItem>
-                            <SelectItem value="july">July</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Date Expense</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-[240px] pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() ||
+                                date < new Date("2025-01-01")
+                              }
+                              captionLayout="dropdown"
+                            />
+                          </PopoverContent>
+                        </Popover>
                         {/* <FormDescription>Month of Expense</FormDescription> */}
                         <FormMessage />
                       </FormItem>
