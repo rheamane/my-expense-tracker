@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import ExpenseForm from "@/components/add-expense";
 import {
   Table,
   TableBody,
@@ -57,9 +58,9 @@ export default function Home() {
     <div className="flex min-h-screen justify-center items-center">
       <div className="flex w-full max-w-lg flex-col gap-6 mx-auto">
         <div className="self-start">
-          <Button asChild>
-            <Link href="/form">Add Expense</Link>
-          </Button>
+           <div>
+              <ExpenseForm />
+          </div>
         </div>
         <Tabs defaultValue="May">
           <TabsList className="flex w-full justify-between gap-x-4 bg-blue-100">
