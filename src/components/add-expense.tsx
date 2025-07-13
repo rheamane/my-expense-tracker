@@ -34,7 +34,7 @@ import { createClient } from "@supabase/supabase-js";
 
 interface Expense {
   title: string;
-  month: string;
+  date: string;
   category: string;
   amount: number;
   notes: string;
@@ -48,7 +48,7 @@ export default function ExpenseForm() {
   const form = useForm<Expense>({
     defaultValues: {
       title: "",
-      month: "",
+      date: "",
       category: "",
       amount: 0.0,
       notes: "",
@@ -102,10 +102,10 @@ export default function ExpenseForm() {
                   {/** Month */}
                   <FormField
                     control={form.control}
-                    name="month"
+                    name="date"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Month</FormLabel>
+                        <FormLabel>Date</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -177,7 +177,7 @@ export default function ExpenseForm() {
                             placeholder="Amount"
                             {...field}
                             min={0}
-                            step={0.01}
+                            step={0.5}
                           />
                         </FormControl>
                         {/* <FormDescription>Amount</FormDescription> */}
@@ -189,7 +189,7 @@ export default function ExpenseForm() {
                   {/** Notes */}
                   <FormField
                     control={form.control}
-                    name="title"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Notes</FormLabel>
