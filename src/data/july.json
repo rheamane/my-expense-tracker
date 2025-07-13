@@ -1,0 +1,44 @@
+[
+  {
+    "category": "Rent",
+    "title": "Monthly Rent",
+    "amount": "$1200.00",
+    "notes": "Paid to landlord"
+  },
+  {
+    "category": "Groceries",
+    "title": "Safeway",
+    "amount": "$110.00",
+    "notes": "Bulk purchase"
+  },
+  {
+    "category": "Utilities",
+    "title": "Internet Service",
+    "amount": "$55.00",
+    "notes": "Wi-Fi bill"
+  },
+  {
+    "category": "Travel",
+    "title": "Flight to NY",
+    "amount": "$320.00",
+    "notes": "Conference trip"
+  },
+  {
+    "category": "Subscriptions",
+    "title": "Netflix",
+    "amount": "$15.99",
+    "notes": "Streaming service"
+  },
+  {
+    "category": "Dining",
+    "title": "Local Diner",
+    "amount": "$14.75",
+    "notes": "Breakfast out"
+  },
+  {
+    "category": "Shopping",
+    "title": "Amazon",
+    "amount": "$89.99",
+    "notes": "Office chair"
+  }
+]
