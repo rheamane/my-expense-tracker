@@ -57,7 +57,11 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(url, key);
 
-export default function ExpenseForm() {
+type ExpenseFormProps = {
+  onSubmitSuccess?: () => void;
+};
+
+export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const form = useForm<Expense>({
@@ -88,6 +92,11 @@ export default function ExpenseForm() {
       console.log("Data Entered: ", data.title);
       form.reset();
       closeRef.current?.click();
+    }
+
+    // Triggering refresh for db update
+    if (onSubmitSuccess) {
+      onSubmitSuccess();
     }
   }
 
