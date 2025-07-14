@@ -48,13 +48,13 @@ import {
 
 import { createClient } from "@supabase/supabase-js";
 
-interface Expense {
-  title: string;
-  date: Date;
-  category: string;
-  amount: number;
-  notes: string;
-}
+// interface Expense {
+//   title: string;
+//   date: Date;
+//   category: string;
+//   amount: number;
+//   notes: string;
+// }
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
