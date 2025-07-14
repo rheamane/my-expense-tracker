@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useRef } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,13 +48,13 @@ import {
 
 import { createClient } from "@supabase/supabase-js";
 
-interface Expense {
-  title: string;
-  date: Date;
-  category: string;
-  amount: number;
-  notes: string;
-}
+// interface Expense {
+//   title: string;
+//   date: Date;
+//   category: string;
+//   amount: number;
+//   notes: string;
+// }
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -61,20 +64,37 @@ type ExpenseFormProps = {
   onSubmitSuccess?: () => void;
 };
 
+const formSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title is required and must be at least 2 characters.",
+  }),
+  date: z.date().min(new Date("2025-01-01"), {
+    message: "Date cannot be older than 2025-01-01",
+  }),
+  category: z.string().min(2, {
+    message: "Please select a category",
+  }),
+  amount: z.number().positive({ message: "Amount must be greater than 0" }),
+  notes: z.string().optional(),
+});
+
 export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const form = useForm<Expense>({
+  // initially: const form = useForm<Expense>({
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      date: undefined,
+      date: new Date(),
       category: "",
       amount: 0.0,
       notes: "",
     },
   });
 
-  async function onSubmit(data: Expense) {
+  // initially: async function onSubmit(data: Expense) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     console.log("Data", data.title);
 
     const { error } = await supabase.from("Expenses").insert({
@@ -165,7 +185,7 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) =>
-                            date > new Date() || date < new Date("2025-01-01")
+                            date > new Date() || date < new Date("2024-01-01")
                           }
                           captionLayout="dropdown"
                         />
@@ -224,10 +244,11 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Amount"
-                        {...field}
-                        min={0}
-                        step={0.5}
+                        value={field.value}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          field.onChange(isNaN(value) ? 0 : value);
+                        }}
                       />
                     </FormControl>
                     {/* <FormDescription>Amount</FormDescription> */}
@@ -255,7 +276,9 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
             <DialogFooter className="sm:justify-start">
               {/* Cancel Button that closes dialog */}
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={() => form?.reset?.()}>
+                  Cancel
+                </Button>
               </DialogClose>
               <Button type="submit"> Submit</Button>
 

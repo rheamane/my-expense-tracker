@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 
@@ -36,9 +37,10 @@ const categoryColors: Record<Category, string> = {
 };
 
 interface Expense {
+  id: number;
   category: string;
   title: string;
-  amount: string;
+  amount: number;
   notes: string;
 }
 
@@ -104,6 +106,16 @@ export default function Home() {
   );
   console.log(months);
 
+  const handleDelete = async (id: number) => {
+    const { error } = await supabase.from("Expenses").delete().eq("id", id);
+
+    if (error) {
+      console.error("Delete failed", error);
+    } else {
+      await refreshData();
+    }
+  };
+
   return (
     <div className="flex min-h-screen justify-center items-center">
       <div className="flex w-full max-w-lg flex-col gap-6 mx-auto">
@@ -136,6 +148,7 @@ export default function Home() {
                           <TableHead>Title</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead className="text-right">Notes</TableHead>
+                          <TableHead className="text-right">{/**Axtion */}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -154,6 +167,24 @@ export default function Home() {
                             <TableCell>{expense.amount}</TableCell>
                             <TableCell className="text-right">
                               {expense.notes}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                {/* <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEdit(expense)}
+                                >
+                                  Edit
+                                </Button> */}
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDelete(expense.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
