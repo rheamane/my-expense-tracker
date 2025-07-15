@@ -14,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 
+import { z } from "zod";
+import { formSchema } from "@/components/add-expense";
+
+type ExpenseFormData = z.infer<typeof formSchema> & { id?: number };
+
 enum Category {
   Groceries = "groceries",
   Utilities = "utilities",
@@ -42,6 +47,7 @@ interface Expense {
   title: string;
   amount: number;
   notes: string;
+  expensed_at: string;
 }
 
 // DB Connection
@@ -91,6 +97,11 @@ async function get3MonthsData() {
 export default function Home() {
   // State Variable
   const [result, setResult] = useState<Record<string, Expense[]>>({});
+  //const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<ExpenseFormData | null>(
+    null
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const refreshData = async () => {
     const data = await get3MonthsData();
@@ -115,12 +126,48 @@ export default function Home() {
       await refreshData();
     }
   };
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense({
+      id: expense.id,
+      title: expense.title,
+      category: expense.category,
+      amount: expense.amount,
+      notes: expense.notes,
+      date: new Date(expense.expensed_at), // converted properly
+    });
+    setDialogOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen justify-center items-center">
-      <div className="flex w-full max-w-lg flex-col gap-6 mx-auto">
+      <div className="flex w-full max-w-3xl flex-col gap-12 mx-auto">
         <div className="self-start">
-          <ExpenseForm onSubmitSuccess={refreshData} />
+          {/* <ExpenseForm
+            key={editingExpense?.id || "new"}
+            initialData={editingExpense || undefined}
+            onSubmitSuccess={() => {
+              setEditingExpense(null);
+              refreshData();
+            }}
+          /> */}
+          <ExpenseForm
+            key={editingExpense?.id || "new"}
+            initialData={editingExpense || undefined}
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setEditingExpense(null); // clear form on close
+              }
+            }}
+            onSubmitSuccess={() => {
+              setDialogOpen(false);
+              setEditingExpense(null);
+              refreshData();
+            }}
+          />
+
+          {/* <ExpenseForm onSubmitSuccess={refreshData} /> */}
         </div>
         <Tabs defaultValue={months[0]}>
           <TabsList className="flex w-full justify-between gap-x-4 bg-blue-100">
@@ -148,7 +195,9 @@ export default function Home() {
                           <TableHead>Title</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead className="text-right">Notes</TableHead>
-                          <TableHead className="text-right">{/**Axtion */}</TableHead>
+                          <TableHead className="text-right">
+                            {/**Axtion */}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -170,13 +219,14 @@ export default function Home() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                {/* <Button
+                                <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleEdit(expense)}
                                 >
                                   Edit
-                                </Button> */}
+                                </Button>
+
                                 <Button
                                   size="sm"
                                   variant="destructive"
