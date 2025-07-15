@@ -61,10 +61,14 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(url, key);
 
 type ExpenseFormProps = {
+  initialData?: z.infer<typeof formSchema> & { id?: number };
   onSubmitSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-const formSchema = z.object({
+export const formSchema = z.object({
+  id: z.number().optional(),
   title: z.string().min(2, {
     message: "Title is required and must be at least 2 characters.",
   }),
@@ -78,13 +82,19 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
+export default function ExpenseForm({
+  onSubmitSuccess,
+  initialData,
+  open,
+  onOpenChange,
+}: ExpenseFormProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
 
   // initially: const form = useForm<Expense>({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialData || {
+      // defaultValues: {
       title: "",
       date: new Date(),
       category: "",
@@ -94,44 +104,87 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
   });
 
   // initially: async function onSubmit(data: Expense) {
-  async function onSubmit(data: z.infer<typeof formSchema>) {
-    console.log("Data", data.title);
+  // async function onSubmit(data: z.infer<typeof formSchema>) {
+  //   console.log("Data", data.title);
 
-    const { error } = await supabase.from("Expenses").insert({
-      title: data.title,
-      category: data.category,
-      amount: data.amount,
-      notes: data.notes,
-      expensed_at: data.date.toISOString(),
-    });
+  //   const { error } = await supabase.from("Expenses").insert({
+  //     title: data.title,
+  //     category: data.category,
+  //     amount: data.amount,
+  //     notes: data.notes,
+  //     expensed_at: data.date.toISOString(),
+  //   });
 
-    if (error) {
-      console.log("Error: ", error);
+  //   if (error) {
+  //     console.log("Error: ", error);
+  //   } else {
+  //     // Take out later
+  //     console.log("Data Entered: ", data.title);
+  //     form.reset();
+  //     closeRef.current?.click();
+  //   }
+
+  //   // Triggering refresh for db update
+  //   if (onSubmitSuccess) {
+  //     onSubmitSuccess();
+  //   }
+  // }
+
+  async function onSubmit(data: z.infer<typeof formSchema> & { id?: number }) {
+    if (data.id) {
+      // Update
+      const { error } = await supabase
+        .from("Expenses")
+        .update({
+          title: data.title,
+          category: data.category,
+          amount: data.amount,
+          notes: data.notes,
+          expensed_at: data.date.toISOString(),
+        })
+        .eq("id", data.id);
+
+      if (error) {
+        console.error("Update failed", error);
+        return;
+      }
     } else {
-      // Take out later
-      console.log("Data Entered: ", data.title);
-      form.reset();
-      closeRef.current?.click();
+      // Insert
+      const { error } = await supabase.from("Expenses").insert({
+        title: data.title,
+        category: data.category,
+        amount: data.amount,
+        notes: data.notes,
+        expensed_at: data.date.toISOString(),
+      });
+
+      if (error) {
+        console.error("Insert failed", error);
+        return;
+      }
     }
 
-    // Triggering refresh for db update
+    form.reset();
+    closeRef.current?.click();
     if (onSubmitSuccess) {
       onSubmitSuccess();
     }
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>Add Expense</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-primary text-2xl font-bold mb-4">
-            Add New Expense
+            {initialData?.id ? "Edit Expense" : "Add New Expense"}
           </DialogTitle>
           <DialogDescription asChild>
-            Add new expense information.
+            {initialData?.id
+              ? "Edit Expense Information"
+              : "Add New Expense Information"}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -244,11 +297,13 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                     <FormControl>
                       <Input
                         type="number"
-                        value={field.value}
+                        inputMode="decimal"
+                        value={field.value === 0 ? "" : field.value}
                         onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          field.onChange(isNaN(value) ? 0 : value);
+                          const value = e.target.value;
+                          field.onChange(value === "" ? 0 : parseFloat(value));
                         }}
+                        placeholder="0.00"
                       />
                     </FormControl>
                     {/* <FormDescription>Amount</FormDescription> */}
@@ -280,7 +335,10 @@ export default function ExpenseForm({ onSubmitSuccess }: ExpenseFormProps) {
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit"> Submit</Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {" "}
+                Submit
+              </Button>
 
               {/* Invisible close button */}
               <DialogClose asChild>
